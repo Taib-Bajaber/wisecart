@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WiseCart — Find the Cheapest Price</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fa;
+  color: #172033;
+}
+
+header {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 18px 7%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 25px;
+  font-weight: 800;
+}
+
+.logo span {
+  color: #16a085;
+}
+
+.location {
+  color: #555;
+  font-size: 14px;
+}
+
+.hero {
+  max-width: 1100px;
+  margin: 55px auto 25px;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 42px;
+  margin-bottom: 12px;
+}
+
+.hero p {
+  color: #667085;
+  font-size: 17px;
+}
+
+.search {
+  max-width: 700px;
+  margin: 28px auto;
+  display: flex;
+  background: white;
+  border: 1px solid #d9dee7;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.search input {
+  flex: 1;
+  padding: 18px;
+  border: 0;
+  outline: 0;
+  font-size: 17px;
+}
+
+.search button {
+  border: 0;
+  background: #16a085;
+  color: white;
+  padding: 0 28px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+.result-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.card.cheapest {
+  border: 2px solid #16a085;
+}
+
+.store {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.price {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 12px 0;
+}
+
+.stock {
+  font-size: 13px;
+  color: #16803c;
+}
+
+.updated {
+  font-size: 12px;
+  color: #888;
+  margin-top: 8px;
+}
+
+.best {
+  margin-top: 30px;
+  background: #172033;
+  color: white;
+  border-radius: 16px;
+  padding: 28px;
+}
+
+.best h2 {
+  margin-top: 0;
+}
+
+.best-price {
+  font-size: 36px;
+  font-weight: 800;
+}
+
+.link {
+  display: inline-block;
+  margin-top: 18px;
+  background: white;
+  color: #172033;
+  padding: 12px 18px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+footer {
+  text-align: center;
+  padding: 50px 20px;
+  color: #888;
+}
+
+@media (max-width: 800px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .hero h1 {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 500px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">Wise<span>Cart</span></div>
+  <div class="location">📍 Mombasa, Kenya</div>
+</header>
+
+<section class="hero">
+
+  <h1>Find the cheapest price.</h1>
+
+  <p>
+    Compare supermarket prices and save money.
+  </p>
+
+  <div class="search">
+    <input id="searchBox" type="text" placeholder="Search products e.g. rice">
+    <button onclick="searchProduct()">Search</button>
+  </div>
+
+</section>
+
+<main class="container">
+
+  <div class="result-title">
+    <h2>Search results</h2>
+    <span id="searched"></span>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="best" id="best"></div>
+
+</main>
+
+<footer>
+  WiseCart — Helping price-sensitive shoppers save money.
+</footer>
+
+<script>
+
+const products = [
+  {
+    store: "Carrefour",
+    product: "Guru Long Grain White Rice",
+    size: "1Kg",
+    price: 160,
+    stock: "In Stock",
+    link: "https://www.carrefour.ke/"
+  },
+  {
+    store: "Naivas",
+    product: "Guru Long Grain White Rice",
+    size: "1Kg",
+    price: 175,
+    stock: "In Stock",
+    link: "https://www.naivas.online/"
+  },
+  {
+    store: "Quickmart",
+    product: "Guru Long Grain White Rice",
+    size: "1Kg",
+    price: 190,
+    stock: "In Stock",
+    link: "https://www.quickmart.co.ke/"
+  },
+  {
+    store: "FoodPlus",
+    product: "Guru Long Grain White Rice",
+    size: "1Kg",
+    price: 264,
+    stock: "In Stock",
+    link: "https://www.foodplus.co.ke/"
+  }
+];
+
+function showResults() {
+
+  const sorted = [...products].sort((a, b) => a.price - b.price);
+
+  const cards = document.getElementById("cards");
+
+  cards.innerHTML = sorted.map((item, index) => `
+    <div class="card ${index === 0 ? "cheapest" : ""}">
+      <div class="store">
+        ${index === 0 ? "🥇 " : ""}${item.store}
+      </div>
+
+      <div class="price">
+        KSh ${item.price}
+      </div>
+
+      <div>
+        ${item.product}
+      </div>
+
+      <div>
+        ${item.size}
+      </div>
+
+      <div class="stock">
+        ${item.stock}
+      </div>
+
+      <div class="updated">
+        Updated just now
+      </div>
+    </div>
+  `).join("");
+
+  const cheapest = sorted[0];
+  const mostExpensive = sorted[sorted.length - 1];
+  const savings = mostExpensive.price - cheapest.price;
+
+  document.getElementById("best").innerHTML = `
+    <h2>CHEAPEST: ${cheapest.store}</h2>
+
+    <div>${cheapest.product} — ${cheapest.size}</div>
+
+    <div class="best-price">
+      KSh ${cheapest.price}
+    </div>
+
+    <div>${cheapest.stock}</div>
+
+    <div>
+      Save up to KSh ${savings}
+    </div>
+
+    <a class="link" href="${cheapest.link}" target="_blank">
+      View Product →
+    </a>
+  `;
+}
+
+function searchProduct() {
+
+  const search = document
+    .getElementById("searchBox")
+    .value
+    .trim();
+
+  document.getElementById("searched").textContent =
+    search ? `Searching: ${search}` : "";
+
+  showResults();
+}
+
+showResults();
+
+</script>
+
+</body>
+</html>
