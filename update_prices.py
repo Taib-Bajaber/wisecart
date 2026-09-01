@@ -1,16 +1,17 @@
 import json
 from pathlib import Path
 
-products = [
-    {
-        "store": "Carrefour",
-        "product": "Guru Long Grain White Rice",
-        "size": "1Kg",
-        "price": 160,
-        "stock": "In Stock",
-        "location": "Mombasa",
-        "link": "https://www.carrefour.ke/mafken/en/indian-basmati-rice/guru-long-grain-rice-1kg/p/61721"
-    },
+# Load Carrefour data collected by collect_carrefour.py
+carrefour_file = Path("data/carrefour.json")
+
+carrefour_products = []
+
+if carrefour_file.exists():
+    with open(carrefour_file, "r", encoding="utf-8") as f:
+        carrefour_products = json.load(f)
+
+# Temporary data for the other supermarkets
+other_stores = [
     {
         "store": "Naivas",
         "product": "Guru Long Grain White Rice",
@@ -40,9 +41,13 @@ products = [
     }
 ]
 
+# Combine the data
+products = carrefour_products + other_stores
+
+# Save WiseCart database
 Path("data").mkdir(exist_ok=True)
 
 with open("data/products.json", "w", encoding="utf-8") as f:
     json.dump(products, f, indent=2)
 
-print("WiseCart data updated.")
+print(f"WiseCart updated with {len(products)} products.")
