@@ -6,26 +6,44 @@ import os
 import re
 import time
 
+
 URL = "https://www.carrefour.ke/mafken/en/c/FKEN1701240"
 
 
 def get_proxy():
-    proxy_string = os.environ.get("CARREFOUR_PROXY", "").strip()
+    """
+    Proxy is OPTIONAL.
+
+    If CARREFOUR_PROXY exists, use it.
+    If it does not exist, connect directly.
+    """
+
+    proxy_string = os.environ.get(
+        "CARREFOUR_PROXY",
+        ""
+    ).strip()
 
     if not proxy_string:
-        raise RuntimeError("CARREFOUR_PROXY secret is missing.")
+        print("No CARREFOUR_PROXY configured.")
+        print("Using direct Carrefour connection.")
+        return None
 
-    # Add scheme if Turnoxy does not provide one
     if "://" not in proxy_string:
         proxy_string = "http://" + proxy_string
 
     parsed = urlparse(proxy_string)
 
     if not parsed.hostname or not parsed.port:
-        raise RuntimeError("CARREFOUR_PROXY format is invalid.")
+        raise RuntimeError(
+            "CARREFOUR_PROXY format is invalid."
+        )
 
     proxy = {
-        "server": f"{parsed.scheme}://{parsed.hostname}:{parsed.port}"
+        "server": (
+            f"{parsed.scheme}://"
+            f"{parsed.hostname}:"
+            f"{parsed.port}"
+        )
     }
 
     if parsed.username:
@@ -34,13 +52,114 @@ def get_proxy():
     if parsed.password:
         proxy["password"] = parsed.password
 
+    print("Using Carrefour proxy:")
+    print(proxy["server"])
+
     return proxy
 
 
-proxy = get_proxy()
+def clean_text(value):
+    return re.sub(
+        r"\s+",
+        " ",
+        str(value or "")
+    ).strip()
 
-print("Using Kenya proxy...")
-print("Proxy server:", proxy["server"])
+
+def extract_prices(text):
+
+    matches = re.findall(
+        r"(?:KES|KSh)\s*([\d,]+(?:\.\d+)?)",
+        text,
+        re.IGNORECASE
+    )
+
+    if not matches:
+        matches = re.findall(
+            r"([\d,]+(?:\.\d+)?)\s*(?:KES|KSh)",
+            text,
+            re.IGNORECASE
+        )
+
+    prices = []
+
+    for value in matches:
+
+        try:
+            number = float(
+                value.replace(",", "")
+            )
+
+            if number > 0:
+                prices.append(number)
+
+        except ValueError:
+            continue
+
+    return prices
+
+
+def extract_size(text):
+
+    match = re.search(
+        r"\b\d+(?:\.\d+)?\s*"
+        r"(?:kg|g|mg|ml|cl|l)\b",
+        text,
+        re.IGNORECASE
+    )
+
+    if not match:
+        return ""
+
+    return clean_text(
+        match.group(0)
+    )
+
+
+def extract_stock(text):
+
+    lower = text.lower()
+
+    if "out of stock" in lower:
+        return "Out of Stock"
+
+    if "in stock" in lower:
+        return "In Stock"
+
+    if "available" in lower:
+        return "Available"
+
+    return "Unknown"
+
+
+def find_product_card(link):
+
+    card = link
+
+    for _ in range(10):
+
+        try:
+
+            parent = card.locator("..")
+
+            text = parent.inner_text(
+                timeout=2000
+            )
+
+            text = clean_text(text)
+
+            if (
+                "KES" in text.upper()
+                or "KSH" in text.upper()
+            ):
+                return parent
+
+            card = parent
+
+        except Exception:
+            break
+
+    return link
 
 
 products = []
@@ -48,26 +167,48 @@ products = []
 
 with sync_playwright() as p:
 
+    proxy = get_proxy()
+
+    browser_options = {
+        "headless": True
+    }
+
+    if proxy:
+        browser_options["proxy"] = proxy
+
     browser = p.chromium.launch(
-        headless=True,
-        proxy=proxy
+        **browser_options
     )
 
-    page = browser.new_page(
+    context = browser.new_context(
         viewport={
             "width": 1440,
             "height": 900
         },
         user_agent=(
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/138.0.0.0 Safari/537.36"
+            "Mozilla/5.0 "
+            "(Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 "
+            "(KHTML, like Gecko) "
+            "Chrome/138.0.0.0 "
+            "Safari/537.36"
         )
     )
 
+    page = context.new_page()
+
+    print()
+    print("=" * 60)
+    print("WISECART CARREFOUR COLLECTOR")
+    print("=" * 60)
+    print()
+
     print("Opening Carrefour Kenya...")
+    print(URL)
+    print()
 
     try:
+
         page.goto(
             URL,
             wait_until="domcontentloaded",
@@ -75,184 +216,204 @@ with sync_playwright() as p:
         )
 
     except Exception as e:
-        print(f"Page load warning: {e}")
+
+        print(
+            "Page load warning:",
+            e
+        )
 
     time.sleep(8)
 
-    print("Page title:", page.title())
-    print("Current URL:", page.url)
+    print(
+        "Page title:",
+        page.title()
+    )
 
-    # Stop if Carrefour could not be reached
+    print(
+        "Current URL:",
+        page.url
+    )
+
+    # Browser-level failure
+
     if "chrome-error" in page.url.lower():
-        print("ERROR: Browser could not reach Carrefour.")
+
         browser.close()
-        raise SystemExit(1)
 
-    body_text = page.locator("body").inner_text().lower()
+        raise RuntimeError(
+            "Browser could not reach Carrefour."
+        )
 
-    # Stop if Carrefour blocks the request
-    if "access denied" in body_text:
-        print("ERROR: Carrefour returned ACCESS DENIED.")
-        browser.close()
-        raise SystemExit(1)
+    # Read page text
 
+    try:
+
+        body_text = page.locator(
+            "body"
+        ).inner_text().lower()
+
+    except Exception:
+
+        body_text = ""
+
+    # Detect blocking
+
+    blocked_phrases = [
+        "access denied",
+        "request blocked",
+        "temporarily blocked",
+        "forbidden"
+    ]
+
+    for phrase in blocked_phrases:
+
+        if phrase in body_text:
+
+            browser.close()
+
+            raise RuntimeError(
+                "Carrefour blocked the request: "
+                + phrase
+            )
+
+    print()
     print("Loading products...")
+    print()
 
     previous_count = 0
     stable_rounds = 0
 
-    for i in range(20):
+    # Scroll through catalogue
 
-        links = page.locator("a[href*='/p/']")
+    for i in range(30):
+
+        links = page.locator(
+            "a[href*='/p/']"
+        )
+
         current_count = links.count()
 
         print(
-            f"Scroll {i + 1}/20 - "
+            f"Scroll {i + 1}/30 | "
             f"products found: {current_count}"
         )
 
         if current_count == previous_count:
+
             stable_rounds += 1
+
         else:
+
             stable_rounds = 0
 
-        if stable_rounds >= 3:
+        if stable_rounds >= 4:
+
+            print(
+                "Product count is stable."
+            )
+
             break
 
         previous_count = current_count
 
-        page.mouse.wheel(0, 4000)
+        page.mouse.wheel(
+            0,
+            4500
+        )
 
         time.sleep(2)
 
-    links = page.locator("a[href*='/p/']")
-
-    print(
-        f"Final product links found: {links.count()}"
+    links = page.locator(
+        "a[href*='/p/']"
     )
 
+    total_links = links.count()
 
-    for i in range(links.count()):
+    print()
+    print(
+        f"Final product links found: "
+        f"{total_links}"
+    )
+    print()
+
+    # Collect products
+
+    for i in range(total_links):
 
         try:
 
             link = links.nth(i)
 
-            href = link.get_attribute("href")
+            href = link.get_attribute(
+                "href"
+            )
 
             if not href:
                 continue
 
-            href = urljoin(URL, href)
+            href = urljoin(
+                URL,
+                href
+            )
 
-            # Find the product card
-            card = link
+            card = find_product_card(
+                link
+            )
 
-            for _ in range(10):
+            text = clean_text(
+                card.inner_text()
+            )
 
-                parent = card.locator("..")
+            # Currently collecting rice only.
+            # We will expand this after
+            # the first successful run.
 
-                try:
-                    text = parent.inner_text(
-                        timeout=2000
-                    )
-
-                except Exception:
-                    break
-
-                if (
-                    "KES" in text.upper()
-                    or "KSH" in text.upper()
-                ):
-                    card = parent
-                    break
-
-                card = parent
-
-            text = card.inner_text()
-
-            # Only collect rice products
             if "rice" not in text.lower():
                 continue
 
-            name = link.inner_text().strip()
+            name = clean_text(
+                link.inner_text()
+            )
 
             if not name:
                 continue
 
-            # Find prices
-            price_matches = re.findall(
-                r"(?:KES|KSh)\s*([\d,]+(?:\.\d+)?)",
-                text,
-                re.IGNORECASE
+            prices = extract_prices(
+                text
             )
-
-            if not price_matches:
-
-                price_matches = re.findall(
-                    r"([\d,]+(?:\.\d+)?)\s*KES",
-                    text,
-                    re.IGNORECASE
-                )
-
-            if not price_matches:
-                continue
-
-            prices = []
-
-            for value in price_matches:
-
-                try:
-
-                    prices.append(
-                        float(
-                            value.replace(",", "")
-                        )
-                    )
-
-                except ValueError:
-                    pass
 
             if not prices:
                 continue
 
-            # Lowest price = current price
+            # Current price
+
             price = min(prices)
 
-            # Product size
-            size_match = re.search(
-                r"\b\d+(?:\.\d+)?\s*"
-                r"(?:kg|g|ml|l)\b",
-                text,
-                re.IGNORECASE
-            )
-
-            size = (
-                size_match.group(0)
-                if size_match
-                else ""
-            )
-
             # Old price
+
             old_price = None
 
-            if len(prices) > 1:
+            higher_prices = [
+                value
+                for value in prices
+                if value > price
+            ]
 
-                higher_prices = [
-                    p for p in prices
-                    if p > price
-                ]
+            if higher_prices:
 
-                if higher_prices:
-                    old_price = max(
-                        higher_prices
-                    )
+                old_price = max(
+                    higher_prices
+                )
 
             # Discount
+
             discount = None
             savings = None
 
-            if old_price and old_price > price:
+            if (
+                old_price is not None
+                and old_price > price
+            ):
 
                 savings = round(
                     old_price - price,
@@ -267,20 +428,18 @@ with sync_playwright() as p:
                     2
                 )
 
-            # Stock
-            lower_text = text.lower()
+            size = extract_size(
+                text
+            )
 
-            if "out of stock" in lower_text:
+            stock = extract_stock(
+                text
+            )
 
-                stock = "Out of Stock"
-
-            elif "in stock" in lower_text:
-
-                stock = "In Stock"
-
-            else:
-
-                stock = "Unknown"
+            updated_at = time.strftime(
+                "%Y-%m-%dT%H:%M:%SZ",
+                time.gmtime()
+            )
 
             products.append({
 
@@ -294,16 +453,20 @@ with sync_playwright() as p:
 
                 "old_price": old_price,
 
-                "discount_percent": discount,
+                "discount_percent":
+                    discount,
 
-                "discount_savings": savings,
+                "discount_savings":
+                    savings,
 
                 "stock": stock,
 
                 "location": "Mombasa",
 
-                "link": href
+                "link": href,
 
+                "updated_at":
+                    updated_at
             })
 
         except Exception as e:
@@ -312,11 +475,11 @@ with sync_playwright() as p:
                 f"Skipped product {i}: {e}"
             )
 
-
     browser.close()
 
 
 # Remove duplicates
+
 unique = {}
 
 for product in products:
@@ -335,15 +498,31 @@ products = list(
 )
 
 
+# Sort products
+
+products.sort(
+    key=lambda product: (
+        product["product"].lower(),
+        product["size"].lower()
+    )
+)
+
+
 # Create data folder
+
 Path("data").mkdir(
     exist_ok=True
 )
 
 
 # Save Carrefour data
+
+output_file = (
+    "data/carrefour.json"
+)
+
 with open(
-    "data/carrefour.json",
+    output_file,
     "w",
     encoding="utf-8"
 ) as f:
@@ -357,17 +536,17 @@ with open(
 
 
 print()
-print("=" * 50)
-
+print("=" * 60)
 print(
     f"FOUND {len(products)} "
     "CARREFOUR RICE PRODUCTS"
 )
+print("=" * 60)
+print()
 
-print("=" * 50)
 
+# Show first 10
 
-# Show first 10 products
 for product in products[:10]:
 
     print(
@@ -376,21 +555,36 @@ for product in products[:10]:
         product["size"],
         "|",
         product["price"],
-        "KES"
+        "KES",
+        "|",
+        product["stock"]
     )
 
 
-# Do not allow a fake successful run
-if len(products) == 0:
+print()
 
-    print()
+
+# Never allow an empty run
+
+if len(products) == 0:
 
     print(
         "ERROR: 0 products were collected."
     )
 
     print(
-        "The run will be marked as FAILED."
+        "The workflow will be marked FAILED."
     )
 
     raise SystemExit(1)
+
+
+print(
+    f"SUCCESS: Saved {len(products)} "
+    f"products to {output_file}"
+)
+
+print()
+print(
+    "Carrefour collection complete."
+)
