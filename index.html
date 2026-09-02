@@ -25,10 +25,7 @@
       --border: #e8edf3;
 
       --green: #16a34a;
-      --green-soft: #ecfdf3;
-
       --red: #dc2626;
-      --red-soft: #fff1f2;
 
       --shadow: 0 10px 35px rgba(15, 23, 42, .07);
       --shadow-hover: 0 18px 45px rgba(15, 23, 42, .11);
@@ -73,9 +70,7 @@
       text-decoration: none;
     }
 
-    /* =========================
-       HEADER
-    ========================== */
+    /* HEADER */
 
     header {
       position: sticky;
@@ -152,9 +147,7 @@
       white-space: nowrap;
     }
 
-    /* =========================
-       HERO
-    ========================== */
+    /* HERO */
 
     .hero {
       background:
@@ -216,9 +209,7 @@
       line-height: 1.65;
     }
 
-    /* =========================
-       SEARCH
-    ========================== */
+    /* SEARCH */
 
     .search-area {
       max-width: 760px;
@@ -230,15 +221,11 @@
       display: flex;
       align-items: center;
       gap: 10px;
-
       padding: 7px 7px 7px 18px;
-
       background: white;
       border: 1px solid #dce4ee;
       border-radius: 17px;
-
-      box-shadow:
-        0 16px 45px rgba(15,23,42,.10);
+      box-shadow: 0 16px 45px rgba(15,23,42,.10);
     }
 
     .search-symbol {
@@ -280,16 +267,12 @@
       left: 0;
       right: 0;
       top: calc(100% + 8px);
-
       display: none;
-
       background: white;
       border: 1px solid var(--border);
       border-radius: 15px;
-
       box-shadow: var(--shadow);
       overflow: hidden;
-
       z-index: 100;
       text-align: left;
     }
@@ -305,9 +288,7 @@
       color: var(--blue);
     }
 
-    /* =========================
-       STORE STRIP
-    ========================== */
+    /* STORE STRIP */
 
     .store-strip {
       max-width: 1160px;
@@ -322,7 +303,6 @@
       border: 1px solid var(--border);
       border-radius: 18px;
       box-shadow: var(--shadow);
-
       padding: 17px;
 
       display: grid;
@@ -338,6 +318,8 @@
       font-weight: 800;
       font-size: 13px;
       color: #374151;
+
+      transition: .2s ease;
     }
 
     .store:hover {
@@ -347,19 +329,27 @@
     }
 
     .store-icon {
-      width: 32px;
-      height: 32px;
-      margin: 0 auto 7px;
-      border-radius: 9px;
-      display: grid;
-      place-items: center;
-      background: #f3f4f6;
-      font-size: 17px;
+      width: 100%;
+      height: 58px;
+      margin: 0 auto 9px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
     }
 
-    /* =========================
-       MAIN
-    ========================== */
+    .store-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* MAIN */
 
     main {
       max-width: 1160px;
@@ -402,16 +392,12 @@
       cursor: pointer;
     }
 
-    /* =========================
-       BEST DEAL
-    ========================== */
+    /* BEST DEAL */
 
     .best-deal {
       display: none;
-
       margin-bottom: 28px;
       padding: 26px;
-
       color: white;
 
       background:
@@ -422,9 +408,7 @@
         );
 
       border-radius: 22px;
-
-      box-shadow:
-        0 18px 45px rgba(22,119,255,.22);
+      box-shadow: 0 18px 45px rgba(22,119,255,.22);
     }
 
     .best-content {
@@ -481,9 +465,7 @@
       color: white;
     }
 
-    /* =========================
-       PRODUCT GRID
-    ========================== */
+    /* PRODUCTS */
 
     .products {
       display: grid;
@@ -497,10 +479,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 20px;
-
-      box-shadow:
-        0 4px 18px rgba(15,23,42,.035);
-
+      box-shadow: 0 4px 18px rgba(15,23,42,.035);
       transition: .22s ease;
     }
 
@@ -539,7 +518,6 @@
     .product-name {
       margin: 0;
       padding-right: 60px;
-
       font-size: 17px;
       line-height: 1.35;
       letter-spacing: -.25px;
@@ -595,7 +573,6 @@
 
       margin-top: 18px;
       padding-top: 14px;
-
       border-top: 1px solid var(--border);
     }
 
@@ -628,9 +605,7 @@
       font-size: 10px;
     }
 
-    /* =========================
-       EMPTY STATE
-    ========================== */
+    /* MESSAGE */
 
     .message {
       display: none;
@@ -656,9 +631,7 @@
       font-size: 14px;
     }
 
-    /* =========================
-       FOOTER
-    ========================== */
+    /* FOOTER */
 
     footer {
       background: white;
@@ -694,12 +667,9 @@
       object-fit: contain;
     }
 
-    /* =========================
-       MOBILE
-    ========================== */
+    /* MOBILE */
 
     @media (max-width: 900px) {
-
       .nav {
         display: none;
       }
@@ -707,11 +677,9 @@
       .products {
         grid-template-columns: repeat(2, 1fr);
       }
-
     }
 
     @media (max-width: 650px) {
-
       .header {
         min-height: 64px;
         padding: 0 15px;
@@ -765,6 +733,10 @@
         grid-template-columns: repeat(2, 1fr);
       }
 
+      .store-icon {
+        height: 52px;
+      }
+
       main {
         padding: 32px 15px 65px;
       }
@@ -794,7 +766,6 @@
       .best-price {
         font-size: 32px;
       }
-
     }
   </style>
 </head>
@@ -805,10 +776,7 @@
   <div class="header">
 
     <a href="#" class="brand">
-      <img
-        src="assets/logo.png"
-        alt="WiseCart"
-      >
+      <img src="assets/logo.png" alt="WiseCart">
       <span>WiseCart</span>
     </a>
 
@@ -864,7 +832,6 @@
       and find the best deal before you shop.
     </p>
 
-
     <div class="search-area">
 
       <div class="search-box">
@@ -909,22 +876,42 @@
   <div class="stores">
 
     <div class="store">
-      <div class="store-icon">🛒</div>
+      <div class="store-icon">
+        <img
+          src="assets/carrefour.png"
+          alt="Carrefour"
+        >
+      </div>
       Carrefour
     </div>
 
     <div class="store">
-      <div class="store-icon">🛍️</div>
+      <div class="store-icon">
+        <img
+          src="assets/naivas.png"
+          alt="Naivas"
+        >
+      </div>
       Naivas
     </div>
 
     <div class="store">
-      <div class="store-icon">🏪</div>
+      <div class="store-icon">
+        <img
+          src="assets/quickmart.png"
+          alt="Quickmart"
+        >
+      </div>
       Quickmart
     </div>
 
     <div class="store">
-      <div class="store-icon">🛒</div>
+      <div class="store-icon">
+        <img
+          src="assets/foodplus.png"
+          alt="Chandarana FoodPlus"
+        >
+      </div>
       FoodPlus
     </div>
 
@@ -1096,7 +1083,6 @@
   let allProducts = [];
   let filteredProducts = [];
 
-
   const searchInput =
     document.getElementById("searchInput");
 
@@ -1153,23 +1139,19 @@
 
 
   function escapeHtml(value) {
-
     return String(value ?? "")
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
-
   }
 
 
   function normalize(value) {
-
     return String(value ?? "")
       .toLowerCase()
       .trim();
-
   }
 
 
@@ -1188,7 +1170,6 @@
           maximumFractionDigits: 2
         }
       );
-
   }
 
 
@@ -1206,7 +1187,6 @@
     }
 
     return date;
-
   }
 
 
@@ -1227,7 +1207,6 @@
           timeStyle: "short"
         }
       );
-
   }
 
 
@@ -1245,7 +1224,6 @@
     }
 
     return "unknown";
-
   }
 
 
@@ -1256,7 +1234,6 @@
     }
 
     return stock;
-
   }
 
 
@@ -1317,9 +1294,7 @@
         "Price data unavailable",
         "WiseCart could not load the current supermarket database."
       );
-
     }
-
   }
 
 
@@ -1353,10 +1328,8 @@
         storeFilter.appendChild(
           option
         );
-
       }
     );
-
   }
 
 
@@ -1396,12 +1369,10 @@
             matchesSearch &&
             matchesStore
           );
-
         }
       );
 
     render();
-
   }
 
 
@@ -1420,9 +1391,7 @@
             )
       );
 
-    }
-
-    else if (
+    } else if (
       sortFilter.value === "discount"
     ) {
 
@@ -1436,20 +1405,16 @@
           )
       );
 
-    }
-
-    else {
+    } else {
 
       sorted.sort(
         (a, b) =>
           Number(a.price) -
           Number(b.price)
       );
-
     }
 
     return sorted;
-
   }
 
 
@@ -1482,24 +1447,19 @@
       );
 
       return;
-
     }
-
 
     resultsTitle.textContent =
       searchInput.value.trim()
         ? `Results for "${searchInput.value.trim()}"`
         : "Latest prices";
 
-
     resultsSubtitle.textContent =
       `${products.length} verified product${products.length === 1 ? "" : "s"} available`;
-
 
     renderBestDeal(products);
 
     renderProducts(products);
-
   }
 
 
@@ -1514,15 +1474,12 @@
             : best
       );
 
-
     bestDeal.style.display =
       "block";
-
 
     bestStore.textContent =
       cheapest.store ||
       "Store";
-
 
     bestProduct.textContent =
       [
@@ -1532,15 +1489,12 @@
       .filter(Boolean)
       .join(" • ");
 
-
     bestPrice.textContent =
       formatPrice(
         cheapest.price
       );
 
-
     bestMeta.innerHTML = "";
-
 
     const stock =
       document.createElement("span");
@@ -1553,7 +1507,6 @@
     bestMeta.appendChild(
       stock
     );
-
 
     if (
       Number(
@@ -1570,9 +1523,7 @@
       bestMeta.appendChild(
         discount
       );
-
     }
-
 
     if (
       Number(
@@ -1591,9 +1542,7 @@
       bestMeta.appendChild(
         savings
       );
-
     }
-
 
     if (cheapest.link) {
 
@@ -1607,9 +1556,7 @@
 
       bestLink.style.display =
         "none";
-
     }
-
   }
 
 
@@ -1622,7 +1569,6 @@
             Number(product.price)
         )
       );
-
 
     productsContainer.innerHTML =
       products
@@ -1651,7 +1597,6 @@
 
             const cheapest =
               price === cheapestPrice;
-
 
             return `
               <article
@@ -1777,11 +1722,9 @@
 
               </article>
             `;
-
           }
         )
         .join("");
-
   }
 
 
@@ -1798,9 +1741,7 @@
         "none";
 
       return;
-
     }
-
 
     const names =
       [
@@ -1820,16 +1761,13 @@
       ]
       .slice(0, 6);
 
-
     if (!names.length) {
 
       suggestions.style.display =
         "none";
 
       return;
-
     }
-
 
     suggestions.innerHTML =
       names
@@ -1846,10 +1784,8 @@
         )
         .join("");
 
-
     suggestions.style.display =
       "block";
-
 
     document
       .querySelectorAll(
@@ -1869,13 +1805,10 @@
                 "none";
 
               searchProducts();
-
             }
           );
-
         }
       );
-
   }
 
 
@@ -1896,7 +1829,6 @@
 
     messageText.textContent =
       text;
-
   }
 
 
@@ -1904,7 +1836,6 @@
 
     message.style.display =
       "none";
-
   }
 
 
@@ -1921,7 +1852,6 @@
       "Loading WiseCart",
       "Getting the available supermarket prices..."
     );
-
   }
 
 
@@ -1933,7 +1863,6 @@
       top: 0,
       behavior: "smooth"
     });
-
   }
 
 
@@ -1946,7 +1875,6 @@
       .scrollIntoView({
         behavior: "smooth"
       });
-
   }
 
 
@@ -1955,7 +1883,6 @@
     alert(
       `${feature} is coming to WiseCart soon.`
     );
-
   }
 
 
@@ -1967,7 +1894,6 @@
         "none";
 
       searchProducts();
-
     }
   );
 
@@ -1986,9 +1912,7 @@
           "none";
 
         searchProducts();
-
       }
-
     }
   );
 
@@ -2004,9 +1928,7 @@
       ) {
 
         searchProducts();
-
       }
-
     }
   );
 
@@ -2035,9 +1957,7 @@
 
         suggestions.style.display =
           "none";
-
       }
-
     }
   );
 
