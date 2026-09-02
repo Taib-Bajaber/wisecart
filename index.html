@@ -1,232 +1,1848 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WiseCart — Find the Cheapest Price</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f5f7fa;color:#172033}
-header{background:white;border-bottom:1px solid #e5e7eb;padding:18px 7%;display:flex;justify-content:space-between;align-items:center}
-.logo{font-size:25px;font-weight:800}.logo span{color:#16a085}
-.location{color:#555;font-size:14px}
-.hero{max-width:1100px;margin:55px auto 25px;padding:0 20px;text-align:center}
-.hero h1{font-size:42px;margin-bottom:12px}.hero p{color:#667085;font-size:17px}
-.search{max-width:700px;margin:28px auto;display:flex;background:white;border:1px solid #d9dee7;border-radius:14px;overflow:hidden}
-.search input{flex:1;padding:18px;border:0;outline:0;font-size:17px}
-.search button{border:0;background:#16a085;color:white;padding:0 28px;font-size:16px;font-weight:bold;cursor:pointer}
-.container{max-width:1100px;margin:30px auto;padding:0 20px}
-.result-title{display:flex;justify-content:space-between;align-items:center}
-.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-top:20px}
-.card{background:white;border:1px solid #e5e7eb;border-radius:14px;padding:20px}
-.card.cheapest{border:2px solid #16a085}
-.store{font-weight:bold;font-size:16px}
-.price{font-size:28px;font-weight:800;margin:12px 0}
-.stock{font-size:13px;color:#16803c}
-.updated{font-size:12px;color:#888;margin-top:8px}
-.best{margin-top:30px;background:#172033;color:white;border-radius:16px;padding:28px}
-.best h2{margin-top:0}.best-price{font-size:36px;font-weight:800}
-.link{display:inline-block;margin-top:18px;background:white;color:#172033;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:bold}
-.empty{background:white;padding:30px;border-radius:14px;text-align:center;color:#667085}
-footer{text-align:center;padding:50px 20px;color:#888}
-@media(max-width:800px){.cards{grid-template-columns:repeat(2,1fr)}.hero h1{font-size:32px}}
-@media(max-width:500px){.cards{grid-template-columns:1fr}}
-</style>
+  <title>WiseCart — Compare Supermarket Prices</title>
+
+  <meta
+    name="description"
+    content="WiseCart helps you compare supermarket prices and find the cheapest products in Kenya."
+  >
+
+  <style>
+    :root {
+      --green: #0f9d58;
+      --green-dark: #087443;
+      --green-light: #e9f8ef;
+      --text: #17211b;
+      --muted: #68756d;
+      --border: #e5ebe7;
+      --background: #f6f8f7;
+      --white: #ffffff;
+      --red: #d93025;
+      --gold: #b7791f;
+      --shadow: 0 10px 30px rgba(18, 35, 25, 0.07);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      background: var(--background);
+      color: var(--text);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    /* =====================================================
+       HEADER
+       ===================================================== */
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: auto;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 21px;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: var(--green);
+      color: white;
+      font-weight: 900;
+      box-shadow: 0 6px 18px rgba(15, 157, 88, 0.22);
+    }
+
+    .location {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* =====================================================
+       HERO
+       ===================================================== */
+
+    .hero {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero-inner {
+      max-width: 900px;
+      margin: auto;
+      padding: 65px 20px 55px;
+      text-align: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--green-light);
+      color: var(--green-dark);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .hero h1 {
+      margin: 18px 0 12px;
+      font-size: clamp(38px, 7vw, 68px);
+      line-height: 0.98;
+      letter-spacing: -3px;
+    }
+
+    .hero h1 span {
+      color: var(--green);
+    }
+
+    .hero p {
+      max-width: 620px;
+      margin: 0 auto 30px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.6;
+    }
+
+    /* =====================================================
+       SEARCH
+       ===================================================== */
+
+    .search-wrap {
+      position: relative;
+      max-width: 720px;
+      margin: auto;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: white;
+      border: 1px solid #dce4df;
+      border-radius: 16px;
+      padding: 8px 8px 8px 18px;
+      box-shadow: 0 12px 35px rgba(18, 35, 25, 0.1);
+    }
+
+    .search-icon {
+      color: var(--muted);
+      font-size: 21px;
+    }
+
+    #searchInput {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--text);
+      font-size: 16px;
+      min-width: 0;
+    }
+
+    #searchInput::placeholder {
+      color: #98a39d;
+    }
+
+    .search-button {
+      border: 0;
+      border-radius: 11px;
+      padding: 12px 18px;
+      background: var(--green);
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .search-button:hover {
+      background: var(--green-dark);
+      transform: translateY(-1px);
+    }
+
+    .suggestions {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 8px);
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: none;
+      z-index: 50;
+      text-align: left;
+    }
+
+    .suggestion {
+      padding: 13px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .suggestion:last-child {
+      border-bottom: 0;
+    }
+
+    .suggestion:hover {
+      background: var(--green-light);
+    }
+
+    /* =====================================================
+       MAIN
+       ===================================================== */
+
+    main {
+      max-width: 1200px;
+      margin: auto;
+      padding: 32px 20px 70px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+
+    .result-heading h2 {
+      margin: 0;
+      font-size: 25px;
+      letter-spacing: -0.8px;
+    }
+
+    .result-heading p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .filters {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+    }
+
+    select {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 10px 12px;
+      color: var(--text);
+      outline: 0;
+      cursor: pointer;
+    }
+
+    /* =====================================================
+       BEST DEAL
+       ===================================================== */
+
+    .best-deal {
+      background: linear-gradient(
+        135deg,
+        #0f9d58,
+        #087443
+      );
+      color: white;
+      border-radius: 22px;
+      padding: 25px;
+      margin-bottom: 28px;
+      box-shadow: 0 14px 35px rgba(15, 157, 88, 0.2);
+      display: none;
+    }
+
+    .best-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
+    .best-label {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    .best-deal h3 {
+      margin: 7px 0 4px;
+      font-size: 24px;
+    }
+
+    .best-product {
+      opacity: 0.85;
+      font-size: 14px;
+    }
+
+    .best-price {
+      font-size: 35px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .best-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .best-meta span {
+      background: rgba(255,255,255,0.13);
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .best-link {
+      display: inline-block;
+      margin-top: 18px;
+      color: white;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    /* =====================================================
+       PRODUCT GRID
+       ===================================================== */
+
+    .products {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .product-card {
+      position: relative;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 19px;
+      box-shadow: 0 4px 16px rgba(18, 35, 25, 0.035);
+      transition: 0.2s ease;
+    }
+
+    .product-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow);
+    }
+
+    .product-card.cheapest {
+      border: 2px solid var(--green);
+    }
+
+    .cheapest-badge {
+      position: absolute;
+      top: 13px;
+      right: 13px;
+      background: var(--green-light);
+      color: var(--green-dark);
+      padding: 5px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .store-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .product-name {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.35;
+      letter-spacing: -0.3px;
+      padding-right: 65px;
+    }
+
+    .product-size {
+      color: var(--muted);
+      margin-top: 5px;
+      font-size: 13px;
+    }
+
+    .price-row {
+      margin-top: 18px;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .current-price {
+      font-size: 27px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    .old-price {
+      color: #98a39d;
+      text-decoration: line-through;
+      font-size: 13px;
+    }
+
+    .discount {
+      background: #fff3e8;
+      color: var(--gold);
+      border-radius: 7px;
+      padding: 4px 6px;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .savings {
+      margin-top: 7px;
+      color: var(--green-dark);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .card-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .stock {
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .stock.in {
+      color: var(--green-dark);
+    }
+
+    .stock.out {
+      color: var(--red);
+    }
+
+    .stock.unknown {
+      color: var(--muted);
+    }
+
+    .view-link {
+      color: var(--green-dark);
+      font-size: 12px;
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .view-link:hover {
+      text-decoration: underline;
+    }
+
+    .updated {
+      margin-top: 12px;
+      color: #929c96;
+      font-size: 11px;
+    }
+
+    /* =====================================================
+       EMPTY / ERROR
+       ===================================================== */
+
+    .message {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 45px 25px;
+      text-align: center;
+      display: none;
+    }
+
+    .message-icon {
+      font-size: 35px;
+      margin-bottom: 10px;
+    }
+
+    .message h3 {
+      margin: 0 0 7px;
+    }
+
+    .message p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    /* =====================================================
+       FOOTER
+       ===================================================== */
+
+    footer {
+      border-top: 1px solid var(--border);
+      background: white;
+    }
+
+    .footer-inner {
+      max-width: 1200px;
+      margin: auto;
+      padding: 25px 20px;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      color: var(--muted);
+      font-size: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* =====================================================
+       RESPONSIVE
+       ===================================================== */
+
+    @media (max-width: 900px) {
+      .products {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 650px) {
+
+      .header-inner {
+        padding: 13px 15px;
+      }
+
+      .location {
+        display: none;
+      }
+
+      .hero-inner {
+        padding: 45px 15px 40px;
+      }
+
+      .hero h1 {
+        letter-spacing: -2px;
+      }
+
+      .hero p {
+        font-size: 15px;
+      }
+
+      .search-box {
+        padding-left: 13px;
+      }
+
+      .search-button {
+        padding: 11px 13px;
+      }
+
+      main {
+        padding: 24px 15px 50px;
+      }
+
+      .products {
+        grid-template-columns: 1fr;
+      }
+
+      .best-top {
+        flex-direction: column;
+      }
+
+      .best-price {
+        font-size: 30px;
+      }
+
+      .toolbar {
+        align-items: stretch;
+      }
+
+      .filters {
+        width: 100%;
+      }
+
+      .filters select {
+        flex: 1;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<header>
-  <div class="logo">Wise<span>Cart</span></div>
-  <div class="location">📍 Mombasa, Kenya</div>
-</header>
+  <!-- =====================================================
+       HEADER
+       ===================================================== -->
 
-<section class="hero">
-  <h1>Find the cheapest price.</h1>
-  <p>Compare supermarket prices and save money.</p>
+  <header>
+    <div class="header-inner">
 
-  <div class="search">
-    <input id="searchBox" type="text" placeholder="Search products e.g. rice">
-    <button onclick="searchProduct()">Search</button>
-  </div>
-</section>
+      <a class="brand" href="#">
+        <div class="brand-mark">W</div>
+        <span>WiseCart</span>
+      </a>
 
-<main class="container">
-
-  <div class="result-title">
-    <h2>Search results</h2>
-    <span id="searched"></span>
-  </div>
-
-  <div class="cards" id="cards"></div>
-
-  <div class="best" id="best"></div>
-
-</main>
-
-<footer>
-  WiseCart — Helping price-sensitive shoppers save money.
-</footer>
-
-<script>
-
-let products = [];
-
-async function loadProducts() {
-  try {
-    const response = await fetch("data/products.json");
-
-    if (!response.ok) {
-      throw new Error("Could not load products");
-    }
-
-    products = await response.json();
-
-    showResults(products);
-
-  } catch (error) {
-
-    document.getElementById("cards").innerHTML =
-      `<div class="empty">
-        WiseCart is loading its price database.
-      </div>`;
-
-    document.getElementById("best").innerHTML = "";
-  }
-}
-
-function searchProduct() {
-
-  const search = document
-    .getElementById("searchBox")
-    .value
-    .trim()
-    .toLowerCase();
-
-  document.getElementById("searched").textContent =
-    search ? `Searching: ${search}` : "";
-
-  if (!search) {
-    showResults(products);
-    return;
-  }
-
-  const results = products.filter(item => {
-
-    const productName =
-      `${item.product} ${item.size} ${item.store}`
-      .toLowerCase();
-
-    return productName.includes(search);
-  });
-
-  showResults(results);
-}
-
-function showResults(items) {
-
-  const cards = document.getElementById("cards");
-  const best = document.getElementById("best");
-
-  if (!items.length) {
-
-    cards.innerHTML =
-      `<div class="empty">
-        No products found.
-      </div>`;
-
-    best.innerHTML = "";
-    return;
-  }
-
-  const sorted = [...items].sort(
-    (a,b) => Number(a.price) - Number(b.price)
-  );
-
-  cards.innerHTML = sorted.map((item,index) => `
-
-    <div class="card ${index === 0 ? "cheapest" : ""}">
-
-      <div class="store">
-        ${index === 0 ? "🥇 " : ""}${item.store}
+      <div class="location">
+        📍 Mombasa, Kenya
       </div>
 
-      <div class="price">
-        KSh ${item.price}
+    </div>
+  </header>
+
+
+  <!-- =====================================================
+       HERO
+       ===================================================== -->
+
+  <section class="hero">
+
+    <div class="hero-inner">
+
+      <div class="eyebrow">
+        ✓ Compare supermarket prices
       </div>
 
-      <div>
-        ${item.product}
-      </div>
+      <h1>
+        Find the <span>cheapest</span> price.
+      </h1>
 
-      <div>
-        ${item.size}
-      </div>
+      <p>
+        Search products and compare supermarket prices
+        in one place. WiseCart helps you spend less.
+      </p>
 
-      <div class="stock">
-        ${item.stock}
-      </div>
 
-      <div class="updated">
-        ${item.updated || "Recently updated"}
+      <div class="search-wrap">
+
+        <div class="search-box">
+
+          <div class="search-icon">
+            🔎
+          </div>
+
+          <input
+            id="searchInput"
+            type="search"
+            autocomplete="off"
+            placeholder="Search products e.g. rice"
+            aria-label="Search products"
+          >
+
+          <button
+            class="search-button"
+            id="searchButton"
+            type="button"
+          >
+            Search
+          </button>
+
+        </div>
+
+        <div
+          id="suggestions"
+          class="suggestions"
+        ></div>
+
       </div>
 
     </div>
 
-  `).join("");
+  </section>
 
-  const cheapest = sorted[0];
-  const mostExpensive = sorted[sorted.length - 1];
 
-  const savings =
-    Number(mostExpensive.price) -
-    Number(cheapest.price);
+  <!-- =====================================================
+       MAIN
+       ===================================================== -->
 
-  best.innerHTML = `
+  <main>
 
-    <h2>CHEAPEST: ${cheapest.store}</h2>
+    <div class="toolbar">
 
-    <div>
-      ${cheapest.product} — ${cheapest.size}
+      <div class="result-heading">
+
+        <h2 id="resultsTitle">
+          Latest prices
+        </h2>
+
+        <p id="resultsSubtitle">
+          Loading WiseCart data...
+        </p>
+
+      </div>
+
+
+      <div class="filters">
+
+        <select id="storeFilter">
+          <option value="all">
+            All stores
+          </option>
+        </select>
+
+        <select id="sortFilter">
+          <option value="price">
+            Cheapest first
+          </option>
+
+          <option value="name">
+            Product name
+          </option>
+
+          <option value="discount">
+            Biggest discount
+          </option>
+        </select>
+
+      </div>
+
     </div>
 
-    <div class="best-price">
-      KSh ${cheapest.price}
-    </div>
 
-    <div>
-      ${cheapest.stock}
-    </div>
+    <!-- ===================================================
+         BEST DEAL
+         =================================================== -->
 
-    <div>
-      Save up to KSh ${savings}
-    </div>
-
-    <a
-      class="link"
-      href="${cheapest.link}"
-      target="_blank"
+    <section
+      id="bestDeal"
+      class="best-deal"
     >
-      View Product →
-    </a>
 
-  `;
-}
+      <div class="best-top">
 
-document
-  .getElementById("searchBox")
-  .addEventListener("keydown", function(event) {
+        <div>
 
-    if (event.key === "Enter") {
-      searchProduct();
+          <div class="best-label">
+            🏆 Cheapest
+          </div>
+
+          <h3 id="bestStore">
+            Carrefour
+          </h3>
+
+          <div
+            id="bestProduct"
+            class="best-product"
+          >
+            —
+          </div>
+
+        </div>
+
+        <div
+          id="bestPrice"
+          class="best-price"
+        >
+          —
+        </div>
+
+      </div>
+
+
+      <div
+        id="bestMeta"
+        class="best-meta"
+      ></div>
+
+
+      <a
+        id="bestLink"
+        class="best-link"
+        href="#"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        View product →
+      </a>
+
+    </section>
+
+
+    <!-- ===================================================
+         PRODUCTS
+         =================================================== -->
+
+    <section
+      id="products"
+      class="products"
+    ></section>
+
+
+    <!-- ===================================================
+         MESSAGE
+         =================================================== -->
+
+    <section
+      id="message"
+      class="message"
+    >
+
+      <div
+        id="messageIcon"
+        class="message-icon"
+      >
+        🔎
+      </div>
+
+      <h3 id="messageTitle">
+        No products found
+      </h3>
+
+      <p id="messageText">
+        Try another search.
+      </p>
+
+    </section>
+
+  </main>
+
+
+  <!-- =====================================================
+       FOOTER
+       ===================================================== -->
+
+  <footer>
+
+    <div class="footer-inner">
+
+      <div>
+        © 2026 WiseCart
+      </div>
+
+      <div>
+        Prices are collected from available supermarket sources.
+      </div>
+
+    </div>
+
+  </footer>
+
+
+  <script>
+
+    // =====================================================
+    // WISECART FRONTEND
+    // =====================================================
+
+    const DATA_URL = "data/products.json";
+
+    let allProducts = [];
+    let filteredProducts = [];
+
+
+    // =====================================================
+    // DOM
+    // =====================================================
+
+    const searchInput =
+      document.getElementById("searchInput");
+
+    const searchButton =
+      document.getElementById("searchButton");
+
+    const suggestions =
+      document.getElementById("suggestions");
+
+    const productsContainer =
+      document.getElementById("products");
+
+    const storeFilter =
+      document.getElementById("storeFilter");
+
+    const sortFilter =
+      document.getElementById("sortFilter");
+
+    const resultsTitle =
+      document.getElementById("resultsTitle");
+
+    const resultsSubtitle =
+      document.getElementById("resultsSubtitle");
+
+    const bestDeal =
+      document.getElementById("bestDeal");
+
+    const bestStore =
+      document.getElementById("bestStore");
+
+    const bestProduct =
+      document.getElementById("bestProduct");
+
+    const bestPrice =
+      document.getElementById("bestPrice");
+
+    const bestMeta =
+      document.getElementById("bestMeta");
+
+    const bestLink =
+      document.getElementById("bestLink");
+
+    const message =
+      document.getElementById("message");
+
+    const messageIcon =
+      document.getElementById("messageIcon");
+
+    const messageTitle =
+      document.getElementById("messageTitle");
+
+    const messageText =
+      document.getElementById("messageText");
+
+
+    // =====================================================
+    // HELPERS
+    // =====================================================
+
+    function escapeHtml(value) {
+
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
     }
 
-  });
 
-loadProducts();
+    function formatPrice(price) {
 
-</script>
+      const number =
+        Number(price);
+
+      if (!Number.isFinite(number)) {
+        return "Price unavailable";
+      }
+
+      return "KSh " +
+        number.toLocaleString(
+          "en-KE",
+          {
+            maximumFractionDigits: 2
+          }
+        );
+
+    }
+
+
+    function normalize(value) {
+
+      return String(value ?? "")
+        .toLowerCase()
+        .trim();
+
+    }
+
+
+    function getProductText(product) {
+
+      return normalize(
+        [
+          product.product,
+          product.size,
+          product.store,
+          product.location
+        ].join(" ")
+      );
+
+    }
+
+
+    function getUpdatedDate(product) {
+
+      if (!product.updated_at) {
+        return null;
+      }
+
+      const date =
+        new Date(product.updated_at);
+
+      if (Number.isNaN(date.getTime())) {
+        return null;
+      }
+
+      return date;
+
+    }
+
+
+    function formatUpdated(product) {
+
+      const date =
+        getUpdatedDate(product);
+
+      if (!date) {
+        return "Update time unavailable";
+      }
+
+      return "Updated " +
+        date.toLocaleString(
+          "en-KE",
+          {
+            dateStyle: "medium",
+            timeStyle: "short"
+          }
+        );
+
+    }
+
+
+    function stockClass(stock) {
+
+      const value =
+        normalize(stock);
+
+      if (value.includes("out")) {
+        return "out";
+      }
+
+      if (value.includes("in")) {
+        return "in";
+      }
+
+      return "unknown";
+
+    }
+
+
+    function stockLabel(stock) {
+
+      if (!stock) {
+        return "Stock unknown";
+      }
+
+      return stock;
+
+    }
+
+
+    // =====================================================
+    // LOAD DATA
+    // =====================================================
+
+    async function loadProducts() {
+
+      showLoading();
+
+      try {
+
+        const response =
+          await fetch(
+            DATA_URL + "?t=" + Date.now()
+          );
+
+        if (!response.ok) {
+
+          throw new Error(
+            "Could not load WiseCart database."
+          );
+
+        }
+
+        const data =
+          await response.json();
+
+        if (!Array.isArray(data)) {
+
+          throw new Error(
+            "WiseCart database has an invalid format."
+          );
+
+        }
+
+        allProducts =
+          data.filter(
+            product =>
+              product &&
+              product.product &&
+              Number.isFinite(
+                Number(product.price)
+              )
+          );
+
+        buildStoreFilter();
+
+        filteredProducts =
+          [...allProducts];
+
+        render();
+
+      } catch (error) {
+
+        console.error(error);
+
+        showMessage(
+          "⚠️",
+          "WiseCart data unavailable",
+          "The price database could not be loaded right now."
+        );
+
+        resultsSubtitle.textContent =
+          "Unable to load current price data.";
+
+      }
+
+    }
+
+
+    // =====================================================
+    // STORE FILTER
+    // =====================================================
+
+    function buildStoreFilter() {
+
+      const stores =
+        [
+          ...new Set(
+            allProducts
+              .map(
+                product =>
+                  product.store
+              )
+              .filter(Boolean)
+          )
+        ]
+        .sort();
+
+      storeFilter.innerHTML =
+        `<option value="all">All stores</option>`;
+
+      stores.forEach(
+        store => {
+
+          const option =
+            document.createElement("option");
+
+          option.value =
+            store;
+
+          option.textContent =
+            store;
+
+          storeFilter.appendChild(
+            option
+          );
+
+        }
+      );
+
+    }
+
+
+    // =====================================================
+    // SEARCH
+    // =====================================================
+
+    function searchProducts() {
+
+      const query =
+        normalize(
+          searchInput.value
+        );
+
+      const selectedStore =
+        storeFilter.value;
+
+      filteredProducts =
+        allProducts.filter(
+          product => {
+
+            const matchesSearch =
+              !query ||
+              getProductText(
+                product
+              ).includes(query);
+
+            const matchesStore =
+              selectedStore === "all" ||
+              product.store === selectedStore;
+
+            return (
+              matchesSearch &&
+              matchesStore
+            );
+
+          }
+        );
+
+      render();
+
+    }
+
+
+    // =====================================================
+    // SORT
+    // =====================================================
+
+    function sortProducts(products) {
+
+      const sorted =
+        [...products];
+
+      switch (
+        sortFilter.value
+      ) {
+
+        case "name":
+
+          sorted.sort(
+            (a, b) =>
+              String(a.product)
+                .localeCompare(
+                  String(b.product)
+                )
+          );
+
+          break;
+
+
+        case "discount":
+
+          sorted.sort(
+            (a, b) =>
+              Number(
+                b.discount_percent || 0
+              ) -
+              Number(
+                a.discount_percent || 0
+              )
+          );
+
+          break;
+
+
+        case "price":
+
+        default:
+
+          sorted.sort(
+            (a, b) =>
+              Number(a.price) -
+              Number(b.price)
+          );
+
+          break;
+
+      }
+
+      return sorted;
+
+    }
+
+
+    // =====================================================
+    // RENDER
+    // =====================================================
+
+    function render() {
+
+      const sorted =
+        sortProducts(
+          filteredProducts
+        );
+
+      hideMessage();
+
+      if (
+        sorted.length === 0
+      ) {
+
+        productsContainer.innerHTML = "";
+
+        bestDeal.style.display =
+          "none";
+
+        showMessage(
+          "🔎",
+          "No products found",
+          "Try searching for another product or changing the store filter."
+        );
+
+        resultsTitle.textContent =
+          "No results";
+
+        resultsSubtitle.textContent =
+          "Try another search.";
+
+        return;
+
+      }
+
+      resultsTitle.textContent =
+        searchInput.value.trim()
+          ? `Results for "${searchInput.value.trim()}"`
+          : "Latest prices";
+
+      resultsSubtitle.textContent =
+        `${sorted.length} product${sorted.length === 1 ? "" : "s"} found`;
+
+      renderBestDeal(sorted);
+
+      renderProducts(sorted);
+
+    }
+
+
+    // =====================================================
+    // BEST DEAL
+    // =====================================================
+
+    function renderBestDeal(products) {
+
+      const cheapest =
+        products.reduce(
+          (best, product) =>
+            Number(product.price) <
+            Number(best.price)
+              ? product
+              : best
+        );
+
+      bestDeal.style.display =
+        "block";
+
+      bestStore.textContent =
+        cheapest.store || "Store";
+
+      bestProduct.textContent =
+        [
+          cheapest.product,
+          cheapest.size
+        ]
+        .filter(Boolean)
+        .join(" • ");
+
+      bestPrice.textContent =
+        formatPrice(
+          cheapest.price
+        );
+
+      bestMeta.innerHTML = "";
+
+      const stock =
+        document.createElement("span");
+
+      stock.textContent =
+        stockLabel(
+          cheapest.stock
+        );
+
+      bestMeta.appendChild(
+        stock
+      );
+
+
+      if (
+        cheapest.discount_percent
+      ) {
+
+        const discount =
+          document.createElement("span");
+
+        discount.textContent =
+          `${cheapest.discount_percent}% off`;
+
+        bestMeta.appendChild(
+          discount
+        );
+
+      }
+
+
+      if (
+        cheapest.discount_savings
+      ) {
+
+        const savings =
+          document.createElement("span");
+
+        savings.textContent =
+          `Save ${formatPrice(
+            cheapest.discount_savings
+          )}`;
+
+        bestMeta.appendChild(
+          savings
+        );
+
+      }
+
+
+      bestLink.href =
+        cheapest.link || "#";
+
+      bestLink.style.display =
+        cheapest.link
+          ? "inline-block"
+          : "none";
+
+    }
+
+
+    // =====================================================
+    // PRODUCT CARDS
+    // =====================================================
+
+    function renderProducts(products) {
+
+      const cheapestPrice =
+        Math.min(
+          ...products.map(
+            product =>
+              Number(product.price)
+          )
+        );
+
+      productsContainer.innerHTML =
+        products.map(
+          product => {
+
+            const price =
+              Number(
+                product.price
+              );
+
+            const isCheapest =
+              price === cheapestPrice;
+
+            const oldPrice =
+              Number(
+                product.old_price
+              );
+
+            const discount =
+              Number(
+                product.discount_percent
+              );
+
+            const savings =
+              Number(
+                product.discount_savings
+              );
+
+
+            return `
+              <article
+                class="product-card ${isCheapest ? "cheapest" : ""}"
+              >
+
+                ${
+                  isCheapest
+                    ? `<div class="cheapest-badge">
+                         Cheapest
+                       </div>`
+                    : ""
+                }
+
+                <div class="store-name">
+                  ${escapeHtml(
+                    product.store ||
+                    "Unknown store"
+                  )}
+                </div>
+
+                <h3 class="product-name">
+                  ${escapeHtml(
+                    product.product
+                  )}
+                </h3>
+
+                ${
+                  product.size
+                    ? `<div class="product-size">
+                         ${escapeHtml(
+                           product.size
+                         )}
+                       </div>`
+                    : ""
+                }
+
+                <div class="price-row">
+
+                  <div class="current-price">
+                    ${formatPrice(price)}
+                  </div>
+
+                  ${
+                    Number.isFinite(oldPrice) &&
+                    oldPrice > price
+                      ? `<div class="old-price">
+                           ${formatPrice(oldPrice)}
+                         </div>`
+                      : ""
+                  }
+
+                  ${
+                    Number.isFinite(discount) &&
+                    discount > 0
+                      ? `<div class="discount">
+                           ${discount}% OFF
+                         </div>`
+                      : ""
+                  }
+
+                </div>
+
+                ${
+                  Number.isFinite(savings) &&
+                  savings > 0
+                    ? `<div class="savings">
+                         Save ${formatPrice(savings)}
+                       </div>`
+                    : ""
+                }
+
+                <div class="card-bottom">
+
+                  <div
+                    class="stock ${stockClass(
+                      product.stock
+                    )}"
+                  >
+                    ${escapeHtml(
+                      stockLabel(
+                        product.stock
+                      )
+                    )}
+                  </div>
+
+                  ${
+                    product.link
+                      ? `<a
+                           class="view-link"
+                           href="${escapeHtml(
+                             product.link
+                           )}"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                         >
+                           View product →
+                         </a>`
+                      : ""
+                  }
+
+                </div>
+
+                <div class="updated">
+                  ${escapeHtml(
+                    formatUpdated(
+                      product
+                    )
+                  )}
+                </div>
+
+              </article>
+            `;
+
+          }
+        )
+        .join("");
+
+    }
+
+
+    // =====================================================
+    // AUTOCOMPLETE
+    // =====================================================
+
+    function showSuggestions() {
+
+      const query =
+        normalize(
+          searchInput.value
+        );
+
+      if (
+        query.length < 2
+      ) {
+
+        suggestions.style.display =
+          "none";
+
+        suggestions.innerHTML =
+          "";
+
+        return;
+
+      }
+
+
+      const names =
+        [
+          ...new Set(
+            allProducts
+              .filter(
+                product =>
+                  getProductText(
+                    product
+                  ).includes(query)
+              )
+              .map(
+                product =>
+                  product.product
+              )
+              .filter(Boolean)
+          )
+        ]
+        .slice(0, 6);
+
+
+      if (!names.length) {
+
+        suggestions.style.display =
+          "none";
+
+        return;
+
+      }
+
+
+      suggestions.innerHTML =
+        names.map(
+          name =>
+            `<div
+               class="suggestion"
+               data-name="${escapeHtml(name)}"
+             >
+               ${escapeHtml(name)}
+             </div>`
+        )
+        .join("");
+
+      suggestions.style.display =
+        "block";
+
+
+      document
+        .querySelectorAll(
+          ".suggestion"
+        )
+        .forEach(
+          element => {
+
+            element.addEventListener(
+              "click",
+              () => {
+
+                searchInput.value =
+                  element.dataset.name;
+
+                suggestions.style.display =
+                  "none";
+
+                searchProducts();
+
+              }
+            );
+
+          }
+        );
+
+    }
+
+
+    // =====================================================
+    // MESSAGES
+    // =====================================================
+
+    function showMessage(
+      icon,
+      title,
+      text
+    ) {
+
+      message.style.display =
+        "block";
+
+      messageIcon.textContent =
+        icon;
+
+      messageTitle.textContent =
+        title;
+
+      messageText.textContent =
+        text;
+
+    }
+
+
+    function hideMessage() {
+
+      message.style.display =
+        "none";
+
+    }
+
+
+    function showLoading() {
+
+      productsContainer.innerHTML =
+        "";
+
+      bestDeal.style.display =
+        "none";
+
+      showMessage(
+        "⏳",
+        "Loading WiseCart",
+        "Getting the latest available supermarket prices..."
+      );
+
+    }
+
+
+    // =====================================================
+    // EVENTS
+    // =====================================================
+
+    searchButton.addEventListener(
+      "click",
+      () => {
+
+        suggestions.style.display =
+          "none";
+
+        searchProducts();
+
+      }
+    );
+
+
+    searchInput.addEventListener(
+      "keydown",
+      event => {
+
+        if (
+          event.key === "Enter"
+        ) {
+
+          event.preventDefault();
+
+          suggestions.style.display =
+            "none";
+
+          searchProducts();
+
+        }
+
+      }
+    );
+
+
+    searchInput.addEventListener(
+      "input",
+      () => {
+
+        showSuggestions();
+
+        if (
+          !searchInput.value.trim()
+        ) {
+
+          searchProducts();
+
+        }
+
+      }
+    );
+
+
+    storeFilter.addEventListener(
+      "change",
+      searchProducts
+    );
+
+
+    sortFilter.addEventListener(
+      "change",
+      render
+    );
+
+
+    document.addEventListener(
+      "click",
+      event => {
+
+        if (
+          !event.target.closest(
+            ".search-wrap"
+          )
+        ) {
+
+          suggestions.style.display =
+            "none";
+
+        }
+
+      }
+    );
+
+
+    // =====================================================
+    // START
+    // =====================================================
+
+    loadProducts();
+
+  </script>
 
 </body>
 </html>
