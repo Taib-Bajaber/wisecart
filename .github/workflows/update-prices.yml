@@ -24,11 +24,52 @@ jobs:
       - name: Install Playwright
         run: |
           python -m pip install --upgrade pip
-          python -m pip install playwright
+          python -m pip install playwright requests
           python -m playwright install chromium --with-deps
 
       - name: Verify Playwright
-        run: python -c "import playwright; print('Playwright installed successfully')"
+        run: |
+          python -c "import playwright; print('Playwright installed successfully')"
+
+      - name: Test Turnoxy proxy
+        env:
+          CARREFOUR_PROXY: ${{ secrets.CARREFOUR_PROXY }}
+        run: |
+          python - <<'PY'
+          import os
+          import requests
+
+          proxy = os.environ.get("CARREFOUR_PROXY", "").strip()
+
+          if not proxy:
+              raise SystemExit("CARREFOUR_PROXY secret is missing.")
+
+          if "://" not in proxy:
+              proxy = "http://" + proxy
+
+          print("Testing Turnoxy proxy...")
+
+          proxies = {
+              "http": proxy,
+              "https": proxy
+          }
+
+          response = requests.get(
+              "https://httpbin.org/ip",
+              proxies=proxies,
+              timeout=30
+          )
+
+          print("HTTP status:", response.status_code)
+          print("Proxy response:", response.text)
+
+          if response.status_code != 200:
+              raise SystemExit(
+                  f"Proxy test failed with HTTP {response.status_code}"
+              )
+
+          print("Turnoxy proxy test PASSED.")
+          PY
 
       - name: Collect Carrefour prices
         env:
