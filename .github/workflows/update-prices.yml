@@ -31,50 +31,41 @@ jobs:
         run: |
           python -c "import playwright; print('Playwright installed successfully')"
 
-      - name: Test Turnoxy proxy
-        env:
-          CARREFOUR_PROXY: ${{ secrets.CARREFOUR_PROXY }}
+      - name: Test Carrefour directly from GitHub
         run: |
           python - <<'PY'
-          import os
           import requests
 
-          proxy = os.environ.get("CARREFOUR_PROXY", "").strip()
-
-          if not proxy:
-              raise SystemExit("CARREFOUR_PROXY secret is missing.")
-
-          if "://" not in proxy:
-              proxy = "http://" + proxy
-
-          print("Testing Turnoxy proxy...")
-
-          proxies = {
-              "http": proxy,
-              "https": proxy
-          }
+          url = "https://www.carrefour.ke/mafken/en/c/FKEN1701240"
 
           response = requests.get(
-              "https://httpbin.org/ip",
-              proxies=proxies,
+              url,
+              headers={
+                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+                  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                  "Accept-Language": "en-KE,en;q=0.9",
+              },
               timeout=30
           )
 
-          print("HTTP status:", response.status_code)
-          print("Proxy response:", response.text)
+          print("Carrefour direct HTTP status:", response.status_code)
+          print("Response length:", len(response.content))
+          print("Server:", response.headers.get("server", ""))
+          print("Cloudflare:", response.headers.get("cf-ray", ""))
 
           if response.status_code != 200:
               raise SystemExit(
-                  f"Proxy test failed with HTTP {response.status_code}"
+                  f"Direct Carrefour test returned HTTP {response.status_code}."
               )
 
-          print("Turnoxy proxy test PASSED.")
+          print("Direct Carrefour test PASSED.")
           PY
 
-      - name: Collect Carrefour prices
-        env:
-          CARREFOUR_PROXY: ${{ secrets.CARREFOUR_PROXY }}
-        run: python collect_carrefour.py
+      # TEMPORARILY DISABLED FOR DIAGNOSTIC
+      # - name: Collect Carrefour prices
+      #   env:
+      #     CARREFOUR_PROXY: ${{ secrets.CARREFOUR_PROXY }}
+      #   run: python collect_carrefour.py
 
       - name: Update WiseCart database
         run: python update_prices.py
