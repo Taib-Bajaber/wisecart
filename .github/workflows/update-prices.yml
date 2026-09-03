@@ -26,35 +26,58 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install requests beautifulsoup4
 
-      - name: Test Carrefour directly
+      - name: Test Carrefour connection
         run: |
           python - <<'PY'
           import requests
 
           url = "https://www.carrefour.ke/mafken/en/c/FKEN1701240"
 
+          headers = {
+              "User-Agent": (
+                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                  "AppleWebKit/537.36 (KHTML, like Gecko) "
+                  "Chrome/138.0.0.0 Safari/537.36"
+              ),
+              "Accept": (
+                  "text/html,application/xhtml+xml,"
+                  "application/xml;q=0.9,image/avif,image/webp,"
+                  "*/*;q=0.8"
+              ),
+              "Accept-Language": "en-KE,en;q=0.9",
+              "Accept-Encoding": "gzip, deflate, br",
+              "Connection": "keep-alive",
+          }
+
           response = requests.get(
               url,
-              headers={
-                  "User-Agent": (
-                      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                      "AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/138.0.0.0 Safari/537.36"
-                  )
-              },
-              timeout=60
+              headers=headers,
+              timeout=60,
+              allow_redirects=True,
           )
 
-          print("Carrefour HTTP status:", response.status_code)
+          print("========================================")
+          print("CARREFOUR CONNECTION TEST")
+          print("========================================")
+          print("HTTP status:", response.status_code)
+          print("Final URL:", response.url)
           print("Response length:", len(response.content))
           print("Server:", response.headers.get("server", ""))
+          print("Content-Type:", response.headers.get("content-type", ""))
+          print("Response body:", repr(response.text[:1000]))
+          print("========================================")
 
           if response.status_code != 200:
               raise SystemExit(
                   f"Carrefour returned HTTP {response.status_code}"
               )
 
-          print("Direct connection reached Carrefour.")
+          if len(response.content) < 1000:
+              raise SystemExit(
+                  "Carrefour returned an unexpectedly small response."
+              )
+
+          print("Carrefour returned a normal-sized page.")
 
       - name: Collect Carrefour prices
         env:
