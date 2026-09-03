@@ -58,6 +58,8 @@ jobs:
           print("Direct connection reached Carrefour.")
 
       - name: Collect Carrefour prices
+        env:
+          CARREFOUR_PROXY: ${{ secrets.CARREFOUR_PROXY }}
         run: python collect_carrefour.py
 
       - name: Update WiseCart database
