@@ -10,14 +10,11 @@ import time
 URL = "https://www.carrefour.ke/mafken/en/c/FKEN1701240"
 
 
+# ============================================================
+# PROXY
+# ============================================================
+
 def get_proxy():
-    """
-    Proxy is OPTIONAL.
-
-    If CARREFOUR_PROXY exists, use it.
-    If it does not exist, connect directly.
-    """
-
     proxy_string = os.environ.get(
         "CARREFOUR_PROXY",
         ""
@@ -58,6 +55,10 @@ def get_proxy():
     return proxy
 
 
+# ============================================================
+# HELPERS
+# ============================================================
+
 def clean_text(value):
     return re.sub(
         r"\s+",
@@ -84,7 +85,6 @@ def extract_prices(text):
     prices = []
 
     for value in matches:
-
         try:
             number = float(
                 value.replace(",", "")
@@ -139,7 +139,6 @@ def find_product_card(link):
     for _ in range(10):
 
         try:
-
             parent = card.locator("..")
 
             text = parent.inner_text(
@@ -162,6 +161,117 @@ def find_product_card(link):
     return link
 
 
+# ============================================================
+# OPEN CARREFOUR
+# ============================================================
+
+def open_carrefour(page):
+
+    print()
+    print("Opening Carrefour Kenya...")
+    print(URL)
+    print()
+
+    errors = []
+
+    # Try several navigation methods.
+    attempts = [
+        {
+            "wait_until": "commit",
+            "timeout": 60000
+        },
+        {
+            "wait_until": "domcontentloaded",
+            "timeout": 90000
+        },
+        {
+            "wait_until": "load",
+            "timeout": 90000
+        }
+    ]
+
+    for attempt_number, options in enumerate(
+        attempts,
+        start=1
+    ):
+
+        print(
+            f"Navigation attempt "
+            f"{attempt_number}/{len(attempts)}..."
+        )
+
+        try:
+
+            response = page.goto(
+                URL,
+                wait_until=options["wait_until"],
+                timeout=options["timeout"]
+            )
+
+            print(
+                "Navigation response:",
+                response.status
+                if response
+                else "none"
+            )
+
+            time.sleep(8)
+
+            print(
+                "Page title:",
+                page.title()
+            )
+
+            print(
+                "Current URL:",
+                page.url
+            )
+
+            # If Chrome has not gone to its error page,
+            # consider navigation successful.
+            if "chrome-error" not in page.url.lower():
+
+                print()
+                print(
+                    "Carrefour page reached successfully."
+                )
+                print()
+
+                return True
+
+        except Exception as e:
+
+            error_text = str(e)
+
+            errors.append(
+                error_text
+            )
+
+            print(
+                "Navigation warning:",
+                error_text
+            )
+
+            time.sleep(3)
+
+    print()
+    print(
+        "All Carrefour navigation attempts failed."
+    )
+
+    for error in errors:
+        print(
+            "ERROR:",
+            error
+        )
+
+    return False
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
 products = []
 
 
@@ -170,32 +280,19 @@ with sync_playwright() as p:
     proxy = get_proxy()
 
     browser_options = {
-        "headless": True
+        "headless": True,
+
+        # Important for the HTTP/2 problem seen in GitHub Actions.
+        "args": [
+            "--disable-http2",
+            "--disable-quic",
+            "--disable-features=UseDnsHttpsSvcbAlpn",
+            "--disable-blink-features=AutomationControlled"
+        ]
     }
 
     if proxy:
         browser_options["proxy"] = proxy
-
-    browser = p.chromium.launch(
-        **browser_options
-    )
-
-    context = browser.new_context(
-        viewport={
-            "width": 1440,
-            "height": 900
-        },
-        user_agent=(
-            "Mozilla/5.0 "
-            "(Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 "
-            "(KHTML, like Gecko) "
-            "Chrome/138.0.0.0 "
-            "Safari/537.36"
-        )
-    )
-
-    page = context.new_page()
 
     print()
     print("=" * 60)
@@ -203,40 +300,51 @@ with sync_playwright() as p:
     print("=" * 60)
     print()
 
-    print("Opening Carrefour Kenya...")
-    print(URL)
-    print()
+    print("Launching Chromium...")
 
-    try:
-
-        page.goto(
-            URL,
-            wait_until="domcontentloaded",
-            timeout=90000
-        )
-
-    except Exception as e:
-
-        print(
-            "Page load warning:",
-            e
-        )
-
-    time.sleep(8)
-
-    print(
-        "Page title:",
-        page.title()
+    browser = p.chromium.launch(
+        **browser_options
     )
 
-    print(
-        "Current URL:",
-        page.url
+    context = browser.new_context(
+
+        viewport={
+            "width": 1440,
+            "height": 900
+        },
+
+        ignore_https_errors=True,
+
+        user_agent=(
+            "Mozilla/5.0 "
+            "(Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 "
+            "(KHTML, like Gecko) "
+            "Chrome/138.0.0.0 "
+            "Safari/537.36"
+        ),
+
+        locale="en-KE",
+
+        timezone_id="Africa/Nairobi"
     )
 
-    # Browser-level failure
+    page = context.new_page()
 
-    if "chrome-error" in page.url.lower():
+    # Hide obvious automation signal.
+    page.add_init_script("""
+        Object.defineProperty(
+            navigator,
+            'webdriver',
+            {
+                get: () => undefined
+            }
+        );
+    """)
+
+    success = open_carrefour(page)
+
+    if not success:
 
         browser.close()
 
@@ -244,19 +352,21 @@ with sync_playwright() as p:
             "Browser could not reach Carrefour."
         )
 
-    # Read page text
+    # ========================================================
+    # CHECK PAGE
+    # ========================================================
 
     try:
 
         body_text = page.locator(
             "body"
-        ).inner_text().lower()
+        ).inner_text(
+            timeout=10000
+        ).lower()
 
     except Exception:
 
         body_text = ""
-
-    # Detect blocking
 
     blocked_phrases = [
         "access denied",
@@ -276,16 +386,18 @@ with sync_playwright() as p:
                 + phrase
             )
 
+    # ========================================================
+    # LOAD PRODUCTS
+    # ========================================================
+
     print()
-    print("Loading products...")
+    print("Loading Carrefour products...")
     print()
 
     previous_count = 0
     stable_rounds = 0
 
-    # Scroll through catalogue
-
-    for i in range(30):
+    for i in range(40):
 
         links = page.locator(
             "a[href*='/p/']"
@@ -294,8 +406,8 @@ with sync_playwright() as p:
         current_count = links.count()
 
         print(
-            f"Scroll {i + 1}/30 | "
-            f"products found: {current_count}"
+            f"Scroll {i + 1}/40 | "
+            f"product links: {current_count}"
         )
 
         if current_count == previous_count:
@@ -306,7 +418,7 @@ with sync_playwright() as p:
 
             stable_rounds = 0
 
-        if stable_rounds >= 4:
+        if stable_rounds >= 5:
 
             print(
                 "Product count is stable."
@@ -318,10 +430,14 @@ with sync_playwright() as p:
 
         page.mouse.wheel(
             0,
-            4500
+            5000
         )
 
         time.sleep(2)
+
+    # ========================================================
+    # COLLECT LINKS
+    # ========================================================
 
     links = page.locator(
         "a[href*='/p/']"
@@ -336,7 +452,18 @@ with sync_playwright() as p:
     )
     print()
 
-    # Collect products
+    if total_links == 0:
+
+        browser.close()
+
+        raise RuntimeError(
+            "Carrefour loaded, but no product "
+            "links were found."
+        )
+
+    # ========================================================
+    # EXTRACT PRODUCTS
+    # ========================================================
 
     for i in range(total_links):
 
@@ -361,13 +488,12 @@ with sync_playwright() as p:
             )
 
             text = clean_text(
-                card.inner_text()
+                card.inner_text(
+                    timeout=3000
+                )
             )
 
-            # Currently collecting rice only.
-            # We will expand this after
-            # the first successful run.
-
+            # First test = rice only.
             if "rice" not in text.lower():
                 continue
 
@@ -385,11 +511,7 @@ with sync_playwright() as p:
             if not prices:
                 continue
 
-            # Current price
-
             price = min(prices)
-
-            # Old price
 
             old_price = None
 
@@ -404,8 +526,6 @@ with sync_playwright() as p:
                 old_price = max(
                     higher_prices
                 )
-
-            # Discount
 
             discount = None
             savings = None
@@ -453,11 +573,9 @@ with sync_playwright() as p:
 
                 "old_price": old_price,
 
-                "discount_percent":
-                    discount,
+                "discount_percent": discount,
 
-                "discount_savings":
-                    savings,
+                "discount_savings": savings,
 
                 "stock": stock,
 
@@ -465,8 +583,7 @@ with sync_playwright() as p:
 
                 "link": href,
 
-                "updated_at":
-                    updated_at
+                "updated_at": updated_at
             })
 
         except Exception as e:
@@ -478,7 +595,9 @@ with sync_playwright() as p:
     browser.close()
 
 
-# Remove duplicates
+# ============================================================
+# REMOVE DUPLICATES
+# ============================================================
 
 unique = {}
 
@@ -498,7 +617,9 @@ products = list(
 )
 
 
-# Sort products
+# ============================================================
+# SORT
+# ============================================================
 
 products.sort(
     key=lambda product: (
@@ -508,14 +629,13 @@ products.sort(
 )
 
 
-# Create data folder
+# ============================================================
+# SAVE
+# ============================================================
 
 Path("data").mkdir(
     exist_ok=True
 )
-
-
-# Save Carrefour data
 
 output_file = (
     "data/carrefour.json"
@@ -535,6 +655,10 @@ with open(
     )
 
 
+# ============================================================
+# RESULT
+# ============================================================
+
 print()
 print("=" * 60)
 print(
@@ -543,9 +667,6 @@ print(
 )
 print("=" * 60)
 print()
-
-
-# Show first 10
 
 for product in products[:10]:
 
@@ -560,20 +681,12 @@ for product in products[:10]:
         product["stock"]
     )
 
-
 print()
-
-
-# Never allow an empty run
 
 if len(products) == 0:
 
     print(
         "ERROR: 0 products were collected."
-    )
-
-    print(
-        "The workflow will be marked FAILED."
     )
 
     raise SystemExit(1)
