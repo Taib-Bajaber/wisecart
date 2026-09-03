@@ -31,7 +31,7 @@ jobs:
         run: |
           python -c "import playwright; print('Playwright installed successfully')"
 
-      - name: Test Carrefour directly from GitHub
+      - name: Test Carrefour directly
         run: |
           python - <<'PY'
           import requests
@@ -41,31 +41,24 @@ jobs:
           response = requests.get(
               url,
               headers={
-                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
-                  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                  "Accept-Language": "en-KE,en;q=0.9",
+                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
               },
               timeout=30
           )
 
-          print("Carrefour direct HTTP status:", response.status_code)
+          print("Carrefour HTTP status:", response.status_code)
           print("Response length:", len(response.content))
           print("Server:", response.headers.get("server", ""))
-          print("Cloudflare:", response.headers.get("cf-ray", ""))
 
           if response.status_code != 200:
               raise SystemExit(
-                  f"Direct Carrefour test returned HTTP {response.status_code}."
+                  f"Carrefour returned HTTP {response.status_code}"
               )
 
-          print("Direct Carrefour test PASSED.")
-          PY
+          print("Direct connection reached Carrefour.")
 
-      # TEMPORARILY DISABLED FOR DIAGNOSTIC
-      # - name: Collect Carrefour prices
-      #   env:
-      #     CARREFOUR_PROXY: ${{ secrets.CARREFOUR_PROXY }}
-      #   run: python collect_carrefour.py
+      - name: Collect Carrefour prices
+        run: python collect_carrefour.py
 
       - name: Update WiseCart database
         run: python update_prices.py
