@@ -3,6 +3,7 @@ from urllib.parse import urljoin
 from datetime import datetime, timezone
 import json
 import re
+
 import requests
 from bs4 import BeautifulSoup
 
@@ -17,15 +18,17 @@ def clean_text(value):
 
 
 def extract_prices(text):
+    prices = []
+
     patterns = [
         r"(?:KES|KSh)\s*([\d,]+(?:\.\d+)?)",
         r"([\d,]+(?:\.\d+)?)\s*(?:KES|KSh)",
     ]
 
-    prices = []
-
     for pattern in patterns:
-        for value in re.findall(pattern, text, re.IGNORECASE):
+        matches = re.findall(pattern, text, re.IGNORECASE)
+
+        for value in matches:
             try:
                 number = float(value.replace(",", ""))
 
@@ -33,7 +36,7 @@ def extract_prices(text):
                     prices.append(number)
 
             except ValueError:
-                pass
+                continue
 
         if prices:
             break
@@ -49,7 +52,10 @@ def extract_size(text):
         re.IGNORECASE,
     )
 
-    return clean_text(match.group(0)) if match else ""
+    if match:
+        return clean_text(match.group(0))
+
+    return ""
 
 
 def extract_stock(text):
@@ -76,22 +82,24 @@ def find_product_container(anchor):
         if current is None:
             break
 
-        text = clean_text(current.get_text(" ", strip=True))
+        text = clean_text(
+            current.get_text(" ", strip=True)
+        )
 
-        # A product card normally contains a Carrefour price.
-        if re.search(r"(?:KES|KSh)\s*[\d,]+", text, re.IGNORECASE):
+        if re.search(
+            r"(?:KES|KSh)\s*[\d,]+",
+            text,
+            re.IGNORECASE,
+        ):
             return current
 
     return anchor.parent
 
 
 def extract_product_name(anchor):
-    text = clean_text(anchor.get_text(" ", strip=True))
-
-    # Remove common UI text if it gets included.
-    text = re.sub(r"\s*\+\s*$", "", text)
-
-    return text
+    return clean_text(
+        anchor.get_text(" ", strip=True)
+    )
 
 
 def collect():
@@ -125,9 +133,20 @@ def collect():
         timeout=60,
     )
 
-    print("Carrefour HTTP status:", response.status_code)
-    print("Response length:", len(response.content))
-    print("Server:", response.headers.get("server", ""))
+    print(
+        "Carrefour HTTP status:",
+        response.status_code
+    )
+
+    print(
+        "Response length:",
+        len(response.content)
+    )
+
+    print(
+        "Server:",
+        response.headers.get("server", "")
+    )
 
     if response.status_code != 200:
         raise RuntimeError(
@@ -137,54 +156,82 @@ def collect():
     html = response.text
 
     if not html:
-        raise RuntimeError("Carrefour returned an empty page.")
+        raise RuntimeError(
+            "Carrefour returned an empty page."
+        )
 
     print("Carrefour HTML received successfully.")
     print()
 
-    soup = BeautifulSoup(html, "html.parser")
-
-    # Carrefour product links use /p/ in the URL.
-    anchors = soup.find_all(
-        "a",
-        href=re.compile(r"/p/", re.IGNORECASE),
+    soup = BeautifulSoup(
+        html,
+        "html.parser"
     )
 
-    print("Product links found:", len(anchors))
+    anchors = soup.find_all(
+        "a",
+        href=re.compile(
+            r"/p/",
+            re.IGNORECASE
+        ),
+    )
+
+    print(
+        "Product links found:",
+        len(anchors)
+    )
+
     print()
 
     products = []
-    updated_at = datetime.now(timezone.utc).strftime(
+    seen = set()
+
+    updated_at = datetime.now(
+        timezone.utc
+    ).strftime(
         "%Y-%m-%dT%H:%M:%SZ"
     )
 
-    seen = set()
-
     for anchor in anchors:
         try:
-            href = anchor.get("href", "").strip()
+            href = anchor.get(
+                "href",
+                ""
+            ).strip()
 
             if not href:
                 continue
 
-            link = urljoin(URL, href)
-
-            card = find_product_container(anchor)
-
-            card_text = clean_text(
-                card.get_text(" ", strip=True)
+            link = urljoin(
+                URL,
+                href
             )
 
-            name = extract_product_name(anchor)
+            card = find_product_container(
+                anchor
+            )
+
+            card_text = clean_text(
+                card.get_text(
+                    " ",
+                    strip=True
+                )
+            )
+
+            name = extract_product_name(
+                anchor
+            )
 
             if not name:
                 continue
 
-            # Current WiseCart test is rice.
+            # Current WiseCart collection target.
             if "rice" not in card_text.lower():
                 continue
 
-            prices = extract_prices(card_text)
+            prices = extract_prices(
+                card_text
+            )
 
             if not prices:
                 continue
@@ -194,17 +241,23 @@ def collect():
             old_price = None
 
             higher_prices = [
-                p for p in prices
-                if p > price
+                value
+                for value in prices
+                if value > price
             ]
 
             if higher_prices:
-                old_price = max(higher_prices)
+                old_price = max(
+                    higher_prices
+                )
 
             discount_percent = None
             discount_savings = None
 
-            if old_price and old_price > price:
+            if (
+                old_price is not None
+                and old_price > price
+            ):
                 discount_savings = round(
                     old_price - price,
                     2
@@ -212,14 +265,23 @@ def collect():
 
                 discount_percent = round(
                     (
-                        (old_price - price)
+                        (
+                            old_price
+                            - price
+                        )
                         / old_price
-                    ) * 100,
-                    2
+                    )
+                    * 100,
+                    2,
                 )
 
-            size = extract_size(card_text)
-            stock = extract_stock(card_text)
+            size = extract_size(
+                card_text
+            )
+
+            stock = extract_stock(
+                card_text
+            )
 
             key = (
                 name.lower(),
@@ -232,19 +294,21 @@ def collect():
 
             seen.add(key)
 
-            products.append({
-                "store": STORE,
-                "product": name,
-                "size": size,
-                "price": price,
-                "old_price": old_price,
-                "discount_percent": discount_percent,
-                "discount_savings": discount_savings,
-                "stock": stock,
-                "location": LOCATION,
-                "link": link,
-                "updated_at": updated_at,
-            })
+            products.append(
+                {
+                    "store": STORE,
+                    "product": name,
+                    "size": size,
+                    "price": price,
+                    "old_price": old_price,
+                    "discount_percent": discount_percent,
+                    "discount_savings": discount_savings,
+                    "stock": stock,
+                    "location": LOCATION,
+                    "link": link,
+                    "updated_at": updated_at,
+                }
+            )
 
         except Exception as error:
             print(
@@ -259,7 +323,10 @@ def collect():
         )
     )
 
-    output = Path("data/carrefour.json")
+    output = Path(
+        "data/carrefour.json"
+    )
+
     output.parent.mkdir(
         parents=True,
         exist_ok=True
