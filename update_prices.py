@@ -1,4 +1,4 @@
-import json
+﻿import json
 from pathlib import Path
 
 CARREFOUR_FILE = Path("data/carrefour.json")
@@ -7,14 +7,6 @@ OUTPUT_FILE = Path("data/products.json")
 with open(CARREFOUR_FILE, "r", encoding="utf-8") as f:
     data = json.load(f)
 
-# New Carrefour format:
-# {
-#   "store": "Carrefour",
-#   "updated_at": "...",
-#   "product_count": 10645,
-#   "products": [...]
-# }
-
 if isinstance(data, dict):
     products = data.get("products", [])
 elif isinstance(data, list):
@@ -22,10 +14,7 @@ elif isinstance(data, list):
 else:
     raise SystemExit("ERROR: Invalid Carrefour data format.")
 
-if not isinstance(products, list):
-    raise SystemExit("ERROR: Products is not a list.")
-
-if len(products) == 0:
+if not products:
     raise SystemExit("ERROR: No Carrefour products found.")
 
 with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
